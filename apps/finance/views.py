@@ -63,3 +63,39 @@ class JournalEntryViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         return Response({'status': 'posted'}, status=status.HTTP_200_OK)
+
+from rest_framework.views import APIView
+from datetime import date
+from apps.finance.services.reports.balance_sheet import generate_balance_sheet
+from apps.finance.services.reports.profit_loss import generate_profit_loss
+
+
+@extend_schema(tags=['Finance - Reports'])
+class BalanceSheetView(APIView):
+    def get(self, request):
+        as_of = request.query_params.get('as_of', str(date.today()))
+        report = generate_balance_sheet(
+            request.company,
+            date.fromisoformat(as_of)
+        )
+        return Response(report)
+
+
+@extend_schema(tags=['Finance - Reports'])
+class ProfitLossView(APIView):
+    def get(self, request):
+        start = request.query_params.get('start')
+        end   = request.query_params.get('end', str(date.today()))
+
+        if not start:
+            return Response(
+                {'error': 'start date is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        report = generate_profit_loss(
+            request.company,
+            date.fromisoformat(start),
+            date.fromisoformat(end)
+        )
+        return Response(report)
