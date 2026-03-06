@@ -144,3 +144,33 @@ class JournalEntryLine(BaseModel):
 
     def __str__(self):
         return f'{self.account.code} - Dr:{self.debit} Cr:{self.credit}'
+
+class Currency(models.Model):
+    code     = models.CharField(max_length=3, unique=True)
+    name     = models.CharField(max_length=100)
+    symbol   = models.CharField(max_length=5)
+    is_base  = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f'{self.code} - {self.name}'
+
+
+class ExchangeRate(models.Model):
+    base_currency   = models.ForeignKey(
+                          Currency, on_delete=models.PROTECT,
+                          related_name='base_rates'
+                      )
+    target_currency = models.ForeignKey(
+                          Currency, on_delete=models.PROTECT,
+                          related_name='target_rates'
+                      )
+    rate      = models.DecimalField(max_digits=18, decimal_places=6)
+    rate_date = models.DateField()
+    source    = models.CharField(max_length=50, default='manual')
+
+    class Meta:
+        unique_together = [('base_currency', 'target_currency', 'rate_date')]
+        get_latest_by   = 'rate_date'
+
+    def __str__(self):
+        return f'{self.base_currency.code}/{self.target_currency.code} - {self.rate_date}'
