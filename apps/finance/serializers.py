@@ -70,3 +70,74 @@ class JournalEntrySerializer(serializers.ModelSerializer):
         for line in lines_data:
             JournalEntryLine.objects.create(entry=entry, **line)
         return entry
+from .models import (
+    Account, Journal, JournalEntry, JournalEntryLine,
+    Vendor, VendorBill, VendorBillLine,
+    Customer, CustomerInvoice, CustomerInvoiceLine
+)
+
+
+class VendorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model  = Vendor
+        fields = [
+            'id', 'name', 'tax_id', 'email', 'phone',
+            'address', 'payment_terms', 'currency',
+            'account_payable', 'is_active'
+        ]
+
+
+class VendorBillLineSerializer(serializers.ModelSerializer):
+    class Meta:
+        model  = VendorBillLine
+        fields = [
+            'id', 'account', 'description',
+            'quantity', 'unit_price', 'subtotal'
+        ]
+
+
+class VendorBillSerializer(serializers.ModelSerializer):
+    lines      = VendorBillLineSerializer(many=True, read_only=True)
+    amount_due = serializers.ReadOnlyField()
+    is_overdue = serializers.ReadOnlyField()
+
+    class Meta:
+        model  = VendorBill
+        fields = [
+            'id', 'vendor', 'bill_number', 'bill_date', 'due_date',
+            'subtotal', 'tax_amount', 'total', 'amount_paid',
+            'amount_due', 'is_overdue', 'notes', 'status', 'lines'
+        ]
+
+
+class CustomerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model  = Customer
+        fields = [
+            'id', 'name', 'tax_id', 'email', 'phone',
+            'address', 'credit_limit', 'currency',
+            'account_receivable', 'is_active'
+        ]
+
+
+class CustomerInvoiceLineSerializer(serializers.ModelSerializer):
+    class Meta:
+        model  = CustomerInvoiceLine
+        fields = [
+            'id', 'account', 'description',
+            'quantity', 'unit_price', 'discount', 'subtotal'
+        ]
+
+
+class CustomerInvoiceSerializer(serializers.ModelSerializer):
+    lines      = CustomerInvoiceLineSerializer(many=True, read_only=True)
+    amount_due = serializers.ReadOnlyField()
+    is_overdue = serializers.ReadOnlyField()
+
+    class Meta:
+        model  = CustomerInvoice
+        fields = [
+            'id', 'customer', 'invoice_number', 'invoice_date', 'due_date',
+            'subtotal', 'tax_amount', 'total', 'amount_paid',
+            'amount_due', 'is_overdue', 'notes', 'status', 'lines'
+        ]

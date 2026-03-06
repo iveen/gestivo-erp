@@ -99,3 +99,94 @@ class ProfitLossView(APIView):
             date.fromisoformat(end)
         )
         return Response(report)
+
+from .models import Vendor, VendorBill, Customer, CustomerInvoice
+from .serializers import (
+    AccountSerializer, JournalSerializer, JournalEntrySerializer,
+    VendorSerializer, VendorBillSerializer,
+    CustomerSerializer, CustomerInvoiceSerializer
+)
+from apps.finance.services.aging_service import generate_ap_aging
+from apps.finance.services.ar_aging_service import generate_ar_aging
+
+
+@extend_schema(tags=['AP - Vendors'])
+class VendorViewSet(viewsets.ModelViewSet):
+    serializer_class = VendorSerializer
+
+    def get_queryset(self):
+        return Vendor.objects.filter(
+            company=self.request.company,
+            is_active=True
+        ).order_by('name')
+
+    def perform_create(self, serializer):
+        serializer.save(
+            tenant=self.request.tenant,
+            company=self.request.company
+        )
+
+
+@extend_schema(tags=['AP - Vendor Bills'])
+class VendorBillViewSet(viewsets.ModelViewSet):
+    serializer_class = VendorBillSerializer
+
+    def get_queryset(self):
+        return VendorBill.objects.filter(
+            company=self.request.company
+        ).select_related('vendor').prefetch_related('lines')
+
+
+@extend_schema(tags=['AP - Reports'])
+class APAgingView(APIView):
+    def get(self, request):
+        as_of = request.query_params.get('as_of', str(date.today()))
+        report = generate_ap_aging(
+            request.company,
+            date.fromisoformat(as_of)
+        )
+        return Response(report)
+
+
+@extend_schema(tags=['AR - Customers'])
+class CustomerViewSet(viewsets.ModelViewSet):
+    serializer_class = CustomerSerializer
+
+    def get_queryset(self):
+        return Customer.objects.filter(
+            company=self.request.company,
+            is_active=True
+        ).order_by('name')
+
+    def perform_create(self, serializer):
+        serializer.save(
+            tenant=self.request.tenant,
+            company=self.request.company
+        )
+
+
+@extend_schema(tags=['AR - Invoices'])
+class CustomerInvoiceViewSet(viewsets.ModelViewSet):
+    serializer_class = CustomerInvoiceSerializer
+
+    def get_queryset(self):
+        return CustomerInvoice.objects.filter(
+            company=self.request.company
+        ).select_related('customer').prefetch_related('lines')
+
+    def perform_create(self, serializer):
+        serializer.save(
+            tenant=self.request.tenant,
+            company=self.request.company
+        )
+
+
+@extend_schema(tags=['AR - Reports'])
+class ARAgingView(APIView):
+    def get(self, request):
+        as_of = request.query_params.get('as_of', str(date.today()))
+        report = generate_ar_aging(
+            request.company,
+            date.fromisoformat(as_of)
+        )
+        return Response(report)
