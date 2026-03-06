@@ -174,3 +174,67 @@ class ExchangeRate(models.Model):
 
     def __str__(self):
         return f'{self.base_currency.code}/{self.target_currency.code} - {self.rate_date}'
+
+class Vendor(BaseModel):
+    company       = models.ForeignKey('accounts.Company', on_delete=models.PROTECT)
+    name          = models.CharField(max_length=200)
+    tax_id        = models.CharField(max_length=50, blank=True)
+    email         = models.EmailField(blank=True)
+    phone         = models.CharField(max_length=30, blank=True)
+    address       = models.TextField(blank=True)
+    payment_terms = models.PositiveIntegerField(default=30)  # days
+    currency      = models.CharField(max_length=3, default='USD')
+    account_payable = models.ForeignKey(
+                          Account, on_delete=models.PROTECT,
+                          related_name='vendors',
+                          null=True, blank=True
+                      )
+
+    def __str__(self):
+        return self.name
+
+class VendorBill(BaseModel):
+    company     = models.ForeignKey('accounts.Company', on_delete=models.PROTECT)
+    vendor      = models.ForeignKey(Vendor, on_delete=models.PROTECT, related_name='bills')
+    bill_number = models.CharField(max_length=50)
+    bill_date   = models.DateField()
+    due_date    = models.DateField()
+    subtotal    = models.DecimalField(max_digits=20, decimal_places=4)
+    tax_amount  = models.DecimalField(max_digits=20, decimal_places=4, default=0)
+    total       = models.DecimalField(max_digits=20, decimal_places=4)
+    amount_paid = models.DecimalField(max_digits=20, decimal_places=4, default=0)
+    notes       = models.TextField(blank=True)
+    STATUS = [
+        ('draft',      'Draft'),
+        ('posted',     'Posted'),
+        ('paid',       'Paid'),
+        ('cancelled',  'Cancelled'),
+    ]
+    status = models.CharField(max_length=20, choices=STATUS, default='draft')
+
+    @property
+    def amount_due(self) -> Decimal:
+        return self.total - self.amount_paid
+
+    @property
+    def is_overdue(self) -> bool:
+        from datetime import date
+        return self.due_date < date.today() and self.amount_due > 0
+
+    def __str__(self):
+        return f'{self.vendor.name} - {self.bill_number}'
+
+class VendorBillLine(BaseModel):
+    bill        = models.ForeignKey(VendorBill, on_delete=models.CASCADE, related_name='lines')
+    account     = models.ForeignKey(Account, on_delete=models.PROTECT)
+    description = models.CharField(max_length=200, blank=True)
+    quantity    = models.DecimalField(max_digits=20, decimal_places=4, default=1)
+    unit_price  = models.DecimalField(max_digits=20, decimal_places=4)
+    subtotal    = models.DecimalField(max_digits=20, decimal_places=4)
+
+    def save(self, *args, **kwargs):
+        self.subtotal = self.quantity * self.unit_price
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f'{self.bill.bill_number} - {self.description}'
