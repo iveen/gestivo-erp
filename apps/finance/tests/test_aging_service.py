@@ -80,3 +80,50 @@ def test_paid_bill_excluded(company, vendor, tenant):
     )
     report = generate_ap_aging(company, date(2026, 3, 1))
     assert report['grand_total'] == Decimal('0')
+
+@pytest.mark.django_db
+def test_bill_31_60_days_overdue(company, vendor, tenant):
+    VendorBill.objects.create(
+        company=company, tenant=tenant, vendor=vendor,
+        bill_number='BILL-004',
+        bill_date=date(2026, 1, 1),
+        due_date=date(2026, 1, 15),  # 45 days overdue as of March 1
+        subtotal=Decimal('300.00'),
+        total=Decimal('300.00'),
+        amount_paid=Decimal('0.00'),
+        status='posted'
+    )
+    report = generate_ap_aging(company, date(2026, 3, 1))
+    assert report['buckets']['31_60']['total'] == Decimal('300.00')
+
+
+@pytest.mark.django_db
+def test_bill_61_90_days_overdue(company, vendor, tenant):
+    VendorBill.objects.create(
+        company=company, tenant=tenant, vendor=vendor,
+        bill_number='BILL-005',
+        bill_date=date(2025, 12, 1),
+        due_date=date(2025, 12, 25),  # 66 days overdue as of March 1
+        subtotal=Decimal('400.00'),
+        total=Decimal('400.00'),
+        amount_paid=Decimal('0.00'),
+        status='posted'
+    )
+    report = generate_ap_aging(company, date(2026, 3, 1))
+    assert report['buckets']['61_90']['total'] == Decimal('400.00')
+
+
+@pytest.mark.django_db
+def test_bill_over_90_days_overdue(company, vendor, tenant):
+    VendorBill.objects.create(
+        company=company, tenant=tenant, vendor=vendor,
+        bill_number='BILL-006',
+        bill_date=date(2025, 11, 1),
+        due_date=date(2025, 11, 15),  # over 90 days overdue as of March 1
+        subtotal=Decimal('600.00'),
+        total=Decimal('600.00'),
+        amount_paid=Decimal('0.00'),
+        status='posted'
+    )
+    report = generate_ap_aging(company, date(2026, 3, 1))
+    assert report['buckets']['over_90']['total'] == Decimal('600.00')
