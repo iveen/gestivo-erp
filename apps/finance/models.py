@@ -101,8 +101,8 @@ class JournalEntry(BaseModel):
 
     @staticmethod
     def validate_balance(lines, raise_on_error=False):
-        total_debit  = sum(Decimal(str(l['debit']))  for l in lines)
-        total_credit = sum(Decimal(str(l['credit'])) for l in lines)
+        total_debit  = sum(Decimal(str(line["debit"]))  for line in lines)
+        total_credit = sum(Decimal(str(line["credit"])) for line in lines)
         diff = abs(total_debit - total_credit)
         if diff <= BALANCE_TOLERANCE:
             return True

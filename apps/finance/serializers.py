@@ -1,14 +1,9 @@
 from rest_framework import serializers
 from drf_spectacular.utils import extend_schema_field
-from .models import Account, Journal, JournalEntry, JournalEntryLine
+from .models import Account, AccountType, Journal, JournalEntry, JournalEntryLine, Vendor, VendorBill, VendorBillLine, Customer, CustomerInvoice, CustomerInvoiceLine
 from .exceptions import UnbalancedJournalEntryError
 
 
-@property
-def normal_balance(self) -> str:
-    return 'debit' if self.account_type in (
-        AccountType.ASSET, AccountType.EXPENSE
-    ) else 'credit'
 
 class AccountSerializer(serializers.ModelSerializer):
     normal_balance = serializers.ReadOnlyField()
@@ -70,11 +65,6 @@ class JournalEntrySerializer(serializers.ModelSerializer):
         for line in lines_data:
             JournalEntryLine.objects.create(entry=entry, **line)
         return entry
-from .models import (
-    Account, Journal, JournalEntry, JournalEntryLine,
-    Vendor, VendorBill, VendorBillLine,
-    Customer, CustomerInvoice, CustomerInvoiceLine
-)
 
 
 class VendorSerializer(serializers.ModelSerializer):

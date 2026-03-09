@@ -1,3 +1,4 @@
+from decimal import Decimal
 import uuid
 from django.db import models
 from apps.core.models import BaseModel
@@ -87,7 +88,6 @@ class StockLocation(BaseModel):
     def __str__(self):
         return self.full_path
 
-from decimal import Decimal
 
 
 class StockMove(BaseModel):

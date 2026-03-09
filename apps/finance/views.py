@@ -1,13 +1,20 @@
+from datetime import date
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from drf_spectacular.utils import extend_schema
-from .models import Account, Journal, JournalEntry
+from .models import Account, Journal, JournalEntry, Vendor, VendorBill, Customer, CustomerInvoice
 from .serializers import (
-    AccountSerializer, JournalSerializer, JournalEntrySerializer
+    AccountSerializer, JournalSerializer, JournalEntrySerializer,
+    VendorSerializer, VendorBillSerializer,
+    CustomerSerializer, CustomerInvoiceSerializer
 )
 from apps.finance.exceptions import UnbalancedJournalEntryError
-
+from apps.finance.services.reports.balance_sheet import generate_balance_sheet
+from apps.finance.services.reports.profit_loss import generate_profit_loss
+from apps.finance.services.aging_service import generate_ap_aging
+from apps.finance.services.ar_aging_service import generate_ar_aging
 
 @extend_schema(tags=['Finance - Accounts'])
 class AccountViewSet(viewsets.ModelViewSet):
@@ -50,7 +57,7 @@ class JournalEntryViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return JournalEntry.objects.filter(
             journal__company=self.request.company
-        ).prefetch_related('lines__account')
+        ).prefetch_related("lines__account").order_by("-date")
 
     @action(detail=True, methods=['post'])
     def post_entry(self, request, pk=None):
@@ -64,10 +71,6 @@ class JournalEntryViewSet(viewsets.ModelViewSet):
             )
         return Response({'status': 'posted'}, status=status.HTTP_200_OK)
 
-from rest_framework.views import APIView
-from datetime import date
-from apps.finance.services.reports.balance_sheet import generate_balance_sheet
-from apps.finance.services.reports.profit_loss import generate_profit_loss
 
 
 @extend_schema(tags=['Finance - Reports'])
@@ -100,14 +103,6 @@ class ProfitLossView(APIView):
         )
         return Response(report)
 
-from .models import Vendor, VendorBill, Customer, CustomerInvoice
-from .serializers import (
-    AccountSerializer, JournalSerializer, JournalEntrySerializer,
-    VendorSerializer, VendorBillSerializer,
-    CustomerSerializer, CustomerInvoiceSerializer
-)
-from apps.finance.services.aging_service import generate_ap_aging
-from apps.finance.services.ar_aging_service import generate_ar_aging
 
 
 @extend_schema(tags=['AP - Vendors'])

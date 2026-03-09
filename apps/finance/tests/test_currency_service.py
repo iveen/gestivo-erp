@@ -31,11 +31,6 @@ def test_missing_rate_raises_error():
     with pytest.raises(CurrencyMismatchError):
         get_exchange_rate('USD', 'JPY', date(2026, 1, 1))
 
-
-@pytest.mark.django_db
-def test_convert_amount():
-    usd = Currency.object
-
 @pytest.mark.django_db
 def test_convert_amount():
     gbp = Currency.objects.create(code='GBP', name='British Pound', symbol='£')
