@@ -25,7 +25,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy Python packages from builder
-COPY --from=builder /root/.local /root/.local
+COPY --from=builder /root/.local /usr/local
 
 # Copy frontend build
 COPY --from=frontend-builder /app/frontend/dist /app/frontend/dist
@@ -38,7 +38,7 @@ RUN useradd -m -u 1000 gestivo && chown -R gestivo:gestivo /app
 USER gestivo
 
 # Make sure scripts in .local are usable
-ENV PATH=/root/.local/bin:$PATH
+ENV PYTHONPATH=/app
 
 EXPOSE 8000
 
