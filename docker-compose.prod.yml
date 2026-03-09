@@ -1,0 +1,67 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB:       gestivo_public
+      POSTGRES_USER:     gestivo_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-gestivo_prod_pass}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gestivo_user -d gestivo_public"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    image: gestivo:latest
+    environment:
+      DEBUG:       "False"
+      SECRET_KEY:  "${SECRET_KEY}"
+      DB_NAME:     gestivo_public
+      DB_USER:     gestivo_user
+      DB_PASSWORD: "${DB_PASSWORD:-gestivo_prod_pass}"
+      DB_HOST:     db
+      DB_PORT:     "5432"
+      REDIS_URL:   redis://redis:6379/0
+      ALLOWED_HOSTS: "${ALLOWED_HOSTS:-*}"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - static_files:/app/staticfiles
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py collectstatic --noinput &&
+             gunicorn gestivo_project.wsgi:application
+             --bind 0.0.0.0:8000
+             --workers 4
+             --timeout 120
+             --access-logfile -"
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/gestivo.conf:/etc/nginx/conf.d/default.conf:ro
+      - static_files:/app/staticfiles:ro
+      - ./frontend/dist:/usr/share/nginx/html:ro
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  static_files:
