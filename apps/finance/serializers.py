@@ -63,7 +63,7 @@ class JournalEntrySerializer(serializers.ModelSerializer):
         lines_data = validated_data.pop('lines')
         entry = JournalEntry.objects.create(**validated_data)
         for line in lines_data:
-            JournalEntryLine.objects.create(entry=entry, **line)
+            JournalEntryLine.objects.create(entry=entry, tenant=entry.tenant, **line)
         return entry
 
 

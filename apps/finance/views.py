@@ -59,6 +59,11 @@ class JournalEntryViewSet(viewsets.ModelViewSet):
             journal__company=self.request.company
         ).prefetch_related("lines__account").order_by("-date")
 
+    def perform_create(self, serializer):
+        serializer.save(
+            tenant=self.request.tenant,
+        )
+
     @action(detail=True, methods=['post'])
     def post_entry(self, request, pk=None):
         entry = self.get_object()

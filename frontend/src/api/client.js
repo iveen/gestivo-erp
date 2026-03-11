@@ -18,6 +18,10 @@ client.interceptors.request.use(config => {
   if (companyId) {
     config.headers['X-Company-ID'] = companyId
   }
+  const tenantSlug = localStorage.getItem('tenant_slug')
+  if (tenantSlug) {
+    config.headers['X-Tenant-Slug'] = tenantSlug
+  }
   return config
 })
 
