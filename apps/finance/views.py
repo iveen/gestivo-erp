@@ -167,7 +167,7 @@ class CustomerInvoiceViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return CustomerInvoice.objects.filter(
             company=self.request.company
-        ).select_related('customer').prefetch_related('lines')
+        ).order_by('-invoice_date').select_related('customer').prefetch_related('lines')
 
     def perform_create(self, serializer):
         serializer.save(

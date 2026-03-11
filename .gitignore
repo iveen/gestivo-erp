@@ -1,13 +1,35 @@
+# Python
 .venv/
 __pycache__/
 *.pyc
 *.pyo
-.env
-*.sqlite3
-node_modules/
+*.pyd
+.Python
+*.egg-info/
 dist/
-.DS_Store
-htmlcov/
+build/
+
+# Environment
+.env
+.env.prod
+
+# Django
+staticfiles/
+media/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# Testing
 .coverage
-*.log
+htmlcov/
 .pytest_cache/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

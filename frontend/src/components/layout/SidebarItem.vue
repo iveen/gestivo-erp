@@ -24,6 +24,7 @@ import {
   TruckIcon,
   CogIcon,
   UsersIcon,
+  WrenchScrewdriverIcon,
 } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
@@ -43,6 +44,7 @@ const icons = {
   'truck':         TruckIcon,
   'cog':           CogIcon,
   'users':         UsersIcon,
+  'wrench':        WrenchScrewdriverIcon,
 }
 
 const iconComponent = computed(() => icons[props.icon] || HomeIcon)

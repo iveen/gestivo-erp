@@ -15,6 +15,7 @@
         <SidebarItem to="/purchases"   icon="truck"         label="Purchases"     />
         <SidebarItem to="/manufacturing" icon="cog"         label="Manufacturing" />
         <SidebarItem to="/crm"         icon="users"         label="CRM"           />
+        <SidebarItem to="/settings"    icon="wrench"        label="Settings"      />
       </nav>
 
       <div class="px-3 py-4 border-t border-blue-800">
