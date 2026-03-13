@@ -166,14 +166,14 @@ def test_journal_entry_post_action(api_client, tenant, company, journal, account
 @pytest.mark.django_db
 def test_vendor_list_requires_auth():
     client = APIClient()
-    response = client.get('/api/finance/vendors/')
+    response = client.get('/api/contacts/?is_vendor=true')
     assert response.status_code == 401
 
 
 @pytest.mark.django_db
 def test_customer_list_requires_auth():
     client = APIClient()
-    response = client.get('/api/finance/customers/')
+    response = client.get('/api/contacts/?is_customer=true')
     assert response.status_code == 401
 
 
@@ -260,7 +260,7 @@ def test_journal_create(user, tenant, company, with_tenant_company):
 def test_vendor_list_with_tenant(user, tenant, company, with_tenant_company):
     client = APIClient()
     client.force_authenticate(user=user)
-    response = client.get('/api/finance/vendors/')
+    response = client.get('/api/contacts/?is_vendor=true')
     assert response.status_code == 200
 
 
@@ -268,7 +268,7 @@ def test_vendor_list_with_tenant(user, tenant, company, with_tenant_company):
 def test_customer_list_with_tenant(user, tenant, company, with_tenant_company):
     client = APIClient()
     client.force_authenticate(user=user)
-    response = client.get('/api/finance/customers/')
+    response = client.get('/api/contacts/?is_customer=true')
     assert response.status_code == 200
 
 
@@ -309,10 +309,11 @@ def test_ar_aging_with_tenant(user, tenant, company, with_tenant_company):
 def test_vendor_create(user, tenant, company, with_tenant_company):
     client = APIClient()
     client.force_authenticate(user=user)
-    response = client.post('/api/finance/vendors/', {
+    response = client.post('/api/contacts/', {
         'name': 'New Vendor',
         'currency': 'USD',
         'payment_terms': 30,
+        'is_vendor': True,
     }, format='json')
     assert response.status_code == 201
 
@@ -321,10 +322,10 @@ def test_vendor_create(user, tenant, company, with_tenant_company):
 def test_customer_create(user, tenant, company, with_tenant_company):
     client = APIClient()
     client.force_authenticate(user=user)
-    response = client.post('/api/finance/customers/', {
+    response = client.post('/api/contacts/', {
         'name': 'New Customer',
         'currency': 'USD',
-        'credit_limit': '5000.00',
+        'is_customer': True,
     }, format='json')
     assert response.status_code == 201
 
@@ -347,11 +348,12 @@ def test_customer_invoice_list(user, tenant, company, with_tenant_company):
 
 @pytest.mark.django_db
 def test_customer_invoice_create(user, tenant, company, with_tenant_company):
-    from apps.finance.models import Customer
+    from apps.contacts.models import Contact
     from datetime import date
-    customer = Customer.objects.create(
+    customer = Contact.objects.create(
         company=company, tenant=tenant,
-        name='Invoice Customer', currency='USD'
+        name='Invoice Customer', currency='USD',
+        is_customer=True
     )
     client = APIClient()
     client.force_authenticate(user=user)

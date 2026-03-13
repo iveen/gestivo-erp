@@ -5,7 +5,7 @@ from apps.core.models import BaseModel
 
 class PurchaseOrder(BaseModel):
     company       = models.ForeignKey('accounts.Company', on_delete=models.PROTECT)
-    vendor        = models.ForeignKey('finance.Vendor', on_delete=models.PROTECT)
+    vendor        = models.ForeignKey('contacts.Contact', on_delete=models.PROTECT)
     order_date    = models.DateField()
     expected_date = models.DateField(null=True, blank=True)
     currency      = models.CharField(max_length=3, default='USD')

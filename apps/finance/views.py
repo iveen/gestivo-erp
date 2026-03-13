@@ -4,11 +4,10 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from drf_spectacular.utils import extend_schema
-from .models import Account, Journal, JournalEntry, Vendor, VendorBill, Customer, CustomerInvoice
+from .models import Account, Journal, JournalEntry, VendorBill, CustomerInvoice
 from .serializers import (
     AccountSerializer, JournalSerializer, JournalEntrySerializer,
-    VendorSerializer, VendorBillSerializer,
-    CustomerSerializer, CustomerInvoiceSerializer
+    VendorBillSerializer, CustomerInvoiceSerializer
 )
 from apps.finance.exceptions import UnbalancedJournalEntryError
 from apps.finance.services.reports.balance_sheet import generate_balance_sheet
@@ -110,23 +109,6 @@ class ProfitLossView(APIView):
 
 
 
-@extend_schema(tags=['AP - Vendors'])
-class VendorViewSet(viewsets.ModelViewSet):
-    serializer_class = VendorSerializer
-
-    def get_queryset(self):
-        return Vendor.objects.filter(
-            company=self.request.company,
-            is_active=True
-        ).order_by('name')
-
-    def perform_create(self, serializer):
-        serializer.save(
-            tenant=self.request.tenant,
-            company=self.request.company
-        )
-
-
 @extend_schema(tags=['AP - Vendor Bills'])
 class VendorBillViewSet(viewsets.ModelViewSet):
     serializer_class = VendorBillSerializer
@@ -146,23 +128,6 @@ class APAgingView(APIView):
             date.fromisoformat(as_of)
         )
         return Response(report)
-
-
-@extend_schema(tags=['AR - Customers'])
-class CustomerViewSet(viewsets.ModelViewSet):
-    serializer_class = CustomerSerializer
-
-    def get_queryset(self):
-        return Customer.objects.filter(
-            company=self.request.company,
-            is_active=True
-        ).order_by('name')
-
-    def perform_create(self, serializer):
-        serializer.save(
-            tenant=self.request.tenant,
-            company=self.request.company
-        )
 
 
 @extend_schema(tags=['AR - Invoices'])

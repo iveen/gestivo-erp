@@ -1,7 +1,8 @@
 import pytest
 from decimal import Decimal
 from datetime import date
-from apps.finance.models import Vendor, VendorBill, Account, AccountType
+from apps.finance.models import VendorBill, Account, AccountType
+from apps.contacts.models import Contact
 from apps.finance.services.aging_service import generate_ap_aging
 from apps.tenants.models import Tenant
 from apps.accounts.models import Company
@@ -19,11 +20,12 @@ def company(tenant):
 
 @pytest.fixture
 def vendor(company, tenant):
-    return Vendor.objects.create(
+    return Contact.objects.create(
         company=company,
         tenant=tenant,
         name='Test Vendor',
-        currency='USD'
+        currency='USD',
+        is_vendor=True
     )
 
 

@@ -1,7 +1,8 @@
 import pytest
 from decimal import Decimal
 from datetime import date
-from apps.finance.models import Customer, CustomerInvoice, CustomerInvoiceLine, Account, AccountType
+from apps.finance.models import CustomerInvoice, CustomerInvoiceLine, Account, AccountType
+from apps.contacts.models import Contact
 from apps.tenants.models import Tenant
 from apps.accounts.models import Company
 
@@ -18,12 +19,12 @@ def company(tenant):
 
 @pytest.fixture
 def customer(company, tenant):
-    return Customer.objects.create(
+    return Contact.objects.create(
         company=company,
         tenant=tenant,
         name='Test Customer',
         currency='USD',
-        credit_limit=Decimal('10000.00')
+        is_customer=True
     )
 
 

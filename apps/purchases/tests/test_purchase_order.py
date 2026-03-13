@@ -2,7 +2,7 @@ import pytest
 from decimal import Decimal
 from datetime import date
 from apps.purchases.models import PurchaseOrder, PurchaseOrderLine
-from apps.finance.models import Vendor
+from apps.contacts.models import Contact
 from apps.inventory.models import Product, ProductCategory, UnitOfMeasure
 from apps.tenants.models import Tenant
 from apps.accounts.models import Company, User
@@ -30,9 +30,10 @@ def user(tenant):
 
 @pytest.fixture
 def vendor(company, tenant):
-    return Vendor.objects.create(
+    return Contact.objects.create(
         company=company, tenant=tenant,
-        name='Test Vendor', currency='USD'
+        name='Test Vendor', currency='USD',
+        is_vendor=True
     )
 
 

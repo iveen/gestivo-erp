@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import PurchaseOrder, PurchaseOrderLine
+from apps.contacts.serializers import ContactSerializer  # noqa
 
 
 class PurchaseOrderLineSerializer(serializers.ModelSerializer):

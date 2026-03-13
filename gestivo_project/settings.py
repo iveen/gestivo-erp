@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     # local
     'apps.core.apps.CoreConfig',
     'apps.tenants.apps.TenantsConfig',
+    'apps.contacts.apps.ContactsConfig',
     'apps.accounts.apps.AccountsConfig',
     'apps.finance.apps.FinanceConfig',
     'apps.inventory.apps.InventoryConfig',

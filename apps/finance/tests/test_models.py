@@ -2,10 +2,11 @@ import pytest
 from decimal import Decimal
 from datetime import date
 from django.utils import timezone
+from apps.contacts.models import Contact
 from apps.finance.models import (
     Account, AccountType, FiscalYear, FiscalPeriod,
     Journal, JournalEntry, JournalEntryLine,
-    Vendor, VendorBill, Customer, CustomerInvoice
+    VendorBill, CustomerInvoice
 )
 from apps.finance.exceptions import UnbalancedJournalEntryError
 from apps.tenants.models import Tenant
@@ -145,9 +146,9 @@ def test_journal_entry_post_fails_if_unbalanced(company, tenant, account, journa
 
 @pytest.mark.django_db
 def test_vendor_bill_str(company, tenant):
-    vendor = Vendor.objects.create(
+    vendor = Contact.objects.create(
         company=company, tenant=tenant,
-        name='Test Vendor', currency='USD'
+        name='Test Vendor', currency='USD', is_vendor=True
     )
     bill = VendorBill.objects.create(
         company=company, tenant=tenant,
@@ -164,9 +165,9 @@ def test_vendor_bill_str(company, tenant):
 
 @pytest.mark.django_db
 def test_customer_invoice_is_not_overdue_when_future(company, tenant):
-    customer = Customer.objects.create(
+    customer = Contact.objects.create(
         company=company, tenant=tenant,
-        name='Test Customer', currency='USD'
+        name='Test Customer', currency='USD', is_customer=True
     )
     invoice = CustomerInvoice.objects.create(
         company=company, tenant=tenant,

@@ -5,7 +5,7 @@ from apps.core.models import BaseModel
 
 class SalesQuotation(BaseModel):
     company        = models.ForeignKey('accounts.Company', on_delete=models.PROTECT)
-    customer       = models.ForeignKey('finance.Customer', on_delete=models.PROTECT)
+    customer       = models.ForeignKey('contacts.Contact', on_delete=models.PROTECT)
     quotation_date = models.DateField()
     expiry_date    = models.DateField(null=True, blank=True)
     salesperson    = models.ForeignKey('accounts.User', on_delete=models.PROTECT)
@@ -63,7 +63,7 @@ class SalesQuotationLine(BaseModel):
 
 class SalesOrder(BaseModel):
     company    = models.ForeignKey('accounts.Company', on_delete=models.PROTECT)
-    customer   = models.ForeignKey('finance.Customer', on_delete=models.PROTECT)
+    customer   = models.ForeignKey('contacts.Contact', on_delete=models.PROTECT)
     quotation  = models.OneToOneField(
                      SalesQuotation, on_delete=models.PROTECT,
                      null=True, blank=True, related_name='order'

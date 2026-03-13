@@ -2,7 +2,7 @@ import pytest
 from decimal import Decimal
 from datetime import date
 from apps.sales.models import SalesQuotation, SalesQuotationLine, SalesOrder
-from apps.finance.models import Customer
+from apps.contacts.models import Contact
 from apps.inventory.models import Product, ProductCategory, UnitOfMeasure
 from apps.tenants.models import Tenant
 from apps.accounts.models import Company, User
@@ -30,9 +30,10 @@ def user(tenant):
 
 @pytest.fixture
 def customer(company, tenant):
-    return Customer.objects.create(
+    return Contact.objects.create(
         company=company, tenant=tenant,
-        name='Test Customer', currency='USD'
+        name='Test Customer', currency='USD',
+        is_customer=True
     )
 
 

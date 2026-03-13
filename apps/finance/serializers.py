@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from drf_spectacular.utils import extend_schema_field
-from .models import Account, AccountType, Journal, JournalEntry, JournalEntryLine, Vendor, VendorBill, VendorBillLine, Customer, CustomerInvoice, CustomerInvoiceLine
+from .models import Account, AccountType, Journal, JournalEntry, JournalEntryLine, VendorBill, VendorBillLine, CustomerInvoice, CustomerInvoiceLine
 from .exceptions import UnbalancedJournalEntryError
 
 
@@ -67,14 +67,6 @@ class JournalEntrySerializer(serializers.ModelSerializer):
         return entry
 
 
-class VendorSerializer(serializers.ModelSerializer):
-    class Meta:
-        model  = Vendor
-        fields = [
-            'id', 'name', 'tax_id', 'email', 'phone',
-            'address', 'payment_terms', 'currency',
-            'account_payable', 'is_active'
-        ]
 
 
 class VendorBillLineSerializer(serializers.ModelSerializer):
@@ -100,14 +92,6 @@ class VendorBillSerializer(serializers.ModelSerializer):
         ]
 
 
-class CustomerSerializer(serializers.ModelSerializer):
-    class Meta:
-        model  = Customer
-        fields = [
-            'id', 'name', 'tax_id', 'email', 'phone',
-            'address', 'credit_limit', 'currency',
-            'account_receivable', 'is_active'
-        ]
 
 
 class CustomerInvoiceLineSerializer(serializers.ModelSerializer):

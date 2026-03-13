@@ -175,27 +175,9 @@ class ExchangeRate(models.Model):
     def __str__(self):
         return f'{self.base_currency.code}/{self.target_currency.code} - {self.rate_date}'
 
-class Vendor(BaseModel):
-    company       = models.ForeignKey('accounts.Company', on_delete=models.PROTECT)
-    name          = models.CharField(max_length=200)
-    tax_id        = models.CharField(max_length=50, blank=True)
-    email         = models.EmailField(blank=True)
-    phone         = models.CharField(max_length=30, blank=True)
-    address       = models.TextField(blank=True)
-    payment_terms = models.PositiveIntegerField(default=30)  # days
-    currency      = models.CharField(max_length=3, default='USD')
-    account_payable = models.ForeignKey(
-                          Account, on_delete=models.PROTECT,
-                          related_name='vendors',
-                          null=True, blank=True
-                      )
-
-    def __str__(self):
-        return self.name
-
 class VendorBill(BaseModel):
     company     = models.ForeignKey('accounts.Company', on_delete=models.PROTECT)
-    vendor      = models.ForeignKey(Vendor, on_delete=models.PROTECT, related_name='bills')
+    vendor      = models.ForeignKey('contacts.Contact', on_delete=models.PROTECT, related_name='vendor_bills')
     bill_number = models.CharField(max_length=50)
     bill_date   = models.DateField()
     due_date    = models.DateField()
@@ -239,27 +221,9 @@ class VendorBillLine(BaseModel):
     def __str__(self):
         return f'{self.bill.bill_number} - {self.description}'
 
-class Customer(BaseModel):
-    company      = models.ForeignKey('accounts.Company', on_delete=models.PROTECT)
-    name         = models.CharField(max_length=200)
-    tax_id       = models.CharField(max_length=50, blank=True)
-    email        = models.EmailField(blank=True)
-    phone        = models.CharField(max_length=30, blank=True)
-    address      = models.TextField(blank=True)
-    credit_limit = models.DecimalField(max_digits=20, decimal_places=4, default=0)
-    currency     = models.CharField(max_length=3, default='USD')
-    account_receivable = models.ForeignKey(
-                             Account, on_delete=models.PROTECT,
-                             related_name='customers',
-                             null=True, blank=True
-                         )
-
-    def __str__(self):
-        return self.name
-
 class CustomerInvoice(BaseModel):
     company        = models.ForeignKey('accounts.Company', on_delete=models.PROTECT)
-    customer       = models.ForeignKey(Customer, on_delete=models.PROTECT, related_name='invoices')
+    customer       = models.ForeignKey('contacts.Contact', on_delete=models.PROTECT, related_name='customer_invoices')
     invoice_number = models.CharField(max_length=50)
     invoice_date   = models.DateField()
     due_date       = models.DateField()
