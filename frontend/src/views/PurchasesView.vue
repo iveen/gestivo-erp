@@ -402,7 +402,7 @@ import { ref, computed, onMounted } from 'vue'
 import client from '../api/client'
 
 const activeTab = ref('Vendors')
-const tabs      = ['Vendors', 'Products', 'Orders']
+const tabs      = ['Vendors', 'Orders']
 
 // Data
 const vendors    = ref([])
@@ -544,9 +544,9 @@ function openVendorModal(v = null) {
 async function saveVendor() {
   try {
     if (vendorModal.value.editing) {
-      await client.patch(`/finance/vendors/${vendorModal.value.id}/`, vendorForm.value)
+      await client.patch(`/contacts/${vendorModal.value.id}/`, vendorForm.value)
     } else {
-      await client.post('/finance/vendors/', vendorForm.value)
+      await client.post('/contacts/', { ...vendorForm.value, is_vendor: true })
     }
     vendorModal.value.open = false
     loadVendors()
@@ -557,7 +557,7 @@ async function saveVendor() {
 
 async function deleteVendor(id) {
   if (!confirm('Delete this vendor?')) return
-  try { await client.delete(`/finance/vendors/${id}/`); loadVendors() } catch {}
+  try { await client.delete(`/contacts/${id}/`); loadVendors() } catch {}
 }
 
 // Product CRUD
@@ -587,10 +587,10 @@ async function deleteProduct(id) {
 
 // Loaders
 async function loadVendors() {
-  try { const r = await client.get('/finance/vendors/'); vendors.value = r.data.results || r.data } catch {}
+  try { const r = await client.get('/contacts/?is_vendor=true'); vendors.value = r.data.results || r.data } catch {}
 }
 async function loadProducts() {
-  try { const r = await client.get('/inventory/products/'); products.value = r.data.results || r.data } catch {}
+  try { const r = await client.get('/inventory/products/?can_be_purchased=true'); products.value = r.data.results || r.data } catch {}
 }
 async function loadOrders() {
   try { const r = await client.get('/purchases/orders/'); orders.value = r.data.results || r.data } catch {}

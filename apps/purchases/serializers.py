@@ -19,7 +19,7 @@ class PurchaseOrderSerializer(serializers.ModelSerializer):
     class Meta:
         model  = PurchaseOrder
         fields = [
-            'id', 'vendor', 'order_date', 'expected_date',
+            'id', 'vendor', 'vendor_name', 'order_date', 'expected_date',
             'currency', 'subtotal', 'tax_amount', 'total',
             'notes', 'status', 'approved_by', 'approved_at', 'lines'
         ]

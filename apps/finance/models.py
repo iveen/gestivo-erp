@@ -176,6 +176,9 @@ class ExchangeRate(models.Model):
         return f'{self.base_currency.code}/{self.target_currency.code} - {self.rate_date}'
 
 class VendorBill(BaseModel):
+    class Meta:
+        ordering = ['-bill_date']
+
     company     = models.ForeignKey('accounts.Company', on_delete=models.PROTECT)
     vendor      = models.ForeignKey('contacts.Contact', on_delete=models.PROTECT, related_name='vendor_bills')
     bill_number = models.CharField(max_length=50)

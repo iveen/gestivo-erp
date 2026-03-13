@@ -23,7 +23,9 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'name', 'sku', 'barcode', 'category', 'uom',
             'cost', 'sales_price', 'valuation_method',
-            'reorder_point', 'reorder_qty', 'is_active'
+            'reorder_point', 'reorder_qty',
+            'product_type', 'can_be_purchased', 'can_be_sold', 'digital_url',
+            'is_active'
         ]
 
 

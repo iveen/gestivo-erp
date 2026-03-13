@@ -168,7 +168,7 @@ onMounted(async () => {
   } catch {}
 
   try {
-    const res = await client.get('/finance/customers/')
+    const res = await client.get('/contacts/?is_customer=true')
     customers.value = res.data.results || res.data
   } catch {}
 })

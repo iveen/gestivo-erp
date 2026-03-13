@@ -51,6 +51,17 @@ class Product(BaseModel):
     reorder_point    = models.DecimalField(max_digits=20, decimal_places=4, default=0)
     reorder_qty      = models.DecimalField(max_digits=20, decimal_places=4, default=0)
 
+    PRODUCT_TYPES = [
+        ('storable',   'Storable Product'),
+        ('consumable', 'Consumable'),
+        ('service',    'Service'),
+        ('digital',    'Digital Product'),
+    ]
+    product_type     = models.CharField(max_length=20, choices=PRODUCT_TYPES, default='storable')
+    can_be_purchased = models.BooleanField(default=True)
+    can_be_sold      = models.BooleanField(default=True)
+    digital_url      = models.URLField(blank=True)
+
     class Meta:
         unique_together = [('company', 'sku')]
 
