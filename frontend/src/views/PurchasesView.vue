@@ -263,8 +263,8 @@
           <button @click="selectedPO = null" class="text-gray-400 hover:text-gray-600">✕</button>
         </div>
         <div class="grid grid-cols-3 gap-4 text-sm">
-          <div><span class="text-gray-400 text-xs">Vendor</span><p class="font-medium">{{ selectedPO.vendor_name }}</p></div>
-          <div><span class="text-gray-400 text-xs">Order Date</span><p class="font-medium">{{ selectedPO.order_date }}</p></div>
+          <div><span class="text-gray-400 text-xs">Vendor</span><p class="font-medium text-gray-800">{{ selectedPO.vendor_name || '—' }}</p></div>
+          <div><span class="text-gray-400 text-xs">Order Date</span><p class="font-medium text-gray-800">{{ selectedPO.order_date || '—' }}</p></div>
           <div><span class="text-gray-400 text-xs">Status</span>
             <span :class="statusClass(selectedPO.status)"
               class="px-2 py-1 rounded-full text-xs font-medium capitalize">
@@ -286,7 +286,7 @@
             <tr v-for="line in selectedPO.lines" :key="line.id" class="border-t border-gray-50">
               <td class="px-3 py-2 font-mono text-xs text-gray-500">{{ line.product_sku }}</td>
               <td class="px-3 py-2 text-gray-700">{{ line.product_name }}</td>
-              <td class="px-3 py-2 text-right text-gray-700">{{ line.quantity }}</td>
+              <td class="px-3 py-2 text-right text-gray-700">{{ fmt(line.quantity) }}</td>
               <td class="px-3 py-2 text-right text-gray-700">{{ fmt(line.unit_price) }}</td>
               <td class="px-3 py-2 text-right font-medium text-gray-800">{{ fmt(line.subtotal) }}</td>
             </tr>
@@ -533,7 +533,14 @@ async function deleteOrder(id) {
   } catch {}
 }
 
-function viewPO(po) { selectedPO.value = po }
+async function viewPO(po) {
+  try {
+    const r = await client.get(`/purchases/orders/${po.id}/`)
+    selectedPO.value = r.data
+  } catch {
+    selectedPO.value = po
+  }
+}
 
 // Vendor CRUD
 function openVendorModal(v = null) {
