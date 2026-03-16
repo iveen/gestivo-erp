@@ -13,6 +13,7 @@ from apps.finance.exceptions import UnbalancedJournalEntryError
 from apps.finance.services.reports.balance_sheet import generate_balance_sheet
 from apps.finance.services.reports.profit_loss import generate_profit_loss
 from apps.finance.services.aging_service import generate_ap_aging
+from apps.finance.services.auto_gl import create_gl_from_vendor_bill, create_gl_from_customer_invoice
 from apps.finance.services.ar_aging_service import generate_ar_aging
 
 @extend_schema(tags=['Finance - Accounts'])
@@ -131,7 +132,12 @@ class VendorBillViewSet(viewsets.ModelViewSet):
             return Response({'error': 'Only draft bills can be posted.'}, status=status.HTTP_400_BAD_REQUEST)
         bill.status = 'posted'
         bill.save(update_fields=['status', 'updated_at'])
-        return Response({'status': 'posted'})
+        # Auto-generate draft GL journal entry
+        gl_entry = create_gl_from_vendor_bill(bill, created_by=request.user)
+        response_data = {'status': 'posted'}
+        if gl_entry:
+            response_data['gl_entry_id'] = str(gl_entry.id)
+        return Response(response_data)
 
     @action(detail=True, methods=['post'])
     def mark_paid(self, request, pk=None):
@@ -177,7 +183,12 @@ class CustomerInvoiceViewSet(viewsets.ModelViewSet):
             return Response({'error': 'Only draft invoices can be sent.'}, status=status.HTTP_400_BAD_REQUEST)
         invoice.status = 'sent'
         invoice.save(update_fields=['status', 'updated_at'])
-        return Response({'status': 'sent'})
+        # Auto-generate draft GL journal entry
+        gl_entry = create_gl_from_customer_invoice(invoice, created_by=request.user)
+        response_data = {'status': 'sent'}
+        if gl_entry:
+            response_data['gl_entry_id'] = str(gl_entry.id)
+        return Response(response_data)
 
     @action(detail=True, methods=['post'])
     def mark_paid(self, request, pk=None):

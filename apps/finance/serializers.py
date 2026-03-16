@@ -22,7 +22,7 @@ class JournalSerializer(serializers.ModelSerializer):
 class JournalEntryLineSerializer(serializers.ModelSerializer):
     class Meta:
         model  = JournalEntryLine
-        fields = ['id', 'account', 'label', 'debit', 'credit']
+        fields = ['id', 'account', 'description', 'debit', 'credit']
         read_only_fields = ['id']
 
 
@@ -32,7 +32,7 @@ class JournalEntrySerializer(serializers.ModelSerializer):
 
     class Meta:
         model  = JournalEntry
-        fields = ['id', 'journal', 'journal_name', 'date', 'reference', 'is_posted', 'lines']
+        fields = ['id', 'journal', 'journal_name', 'date', 'reference', 'is_posted', 'source_type', 'source_id', 'lines']
         read_only_fields = ['id', 'is_posted']
 
     def validate(self, data):

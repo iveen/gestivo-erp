@@ -197,6 +197,9 @@
               <th class="text-left px-4 py-3">Reference</th>
               <th class="text-left px-4 py-3">Journal</th>
               <th class="text-right px-4 py-3">Total Debit</th>
+              <th class="text-left px-4 py-3">Source</th>
+              <th class="text-left px-4 py-3">Source</th>
+              <th class="text-left px-4 py-3">Source</th>
               <th class="text-left px-4 py-3">Status</th>
               <th class="text-left px-4 py-3">Actions</th>
             </tr>
@@ -212,6 +215,13 @@
               <td class="px-4 py-3 text-gray-500">{{ journalName(entry.journal) }}</td>
               <td class="px-4 py-3 text-right text-gray-800 font-medium">
                 {{ entryTotal(entry) }}
+              </td>
+              <td class="px-4 py-3">
+                <span v-if="entry.source_type && entry.source_type !== 'manual'"
+                  class="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700 capitalize">
+                  {{ entry.source_type.replace('_', ' ') }}
+                </span>
+                <span v-else class="text-xs text-gray-400">manual</span>
               </td>
               <td class="px-4 py-3">
                 <span :class="entry.is_posted
@@ -617,6 +627,9 @@
               <th class="text-left px-4 py-3">Due Date</th>
               <th class="text-right px-4 py-3">Total</th>
               <th class="text-right px-4 py-3">Amount Due</th>
+              <th class="text-left px-4 py-3">Source</th>
+              <th class="text-left px-4 py-3">Source</th>
+              <th class="text-left px-4 py-3">Source</th>
               <th class="text-left px-4 py-3">Status</th>
               <th class="text-left px-4 py-3">Actions</th>
             </tr>
@@ -769,6 +782,9 @@
               <th class="text-left px-4 py-3">Due Date</th>
               <th class="text-right px-4 py-3">Total</th>
               <th class="text-right px-4 py-3">Amount Due</th>
+              <th class="text-left px-4 py-3">Source</th>
+              <th class="text-left px-4 py-3">Source</th>
+              <th class="text-left px-4 py-3">Source</th>
               <th class="text-left px-4 py-3">Status</th>
               <th class="text-left px-4 py-3">Actions</th>
             </tr>

@@ -115,3 +115,45 @@ class UserCompanyRole(models.Model):
 
     def __str__(self):
         return f'{self.user.email} - {self.company.name} - {self.role.name}'
+
+
+class CompanySettings(models.Model):
+    """GL account defaults for auto-journal generation."""
+    company              = models.OneToOneField(
+                               Company, on_delete=models.CASCADE,
+                               related_name='settings'
+                           )
+    default_ap_account   = models.ForeignKey(
+                               'finance.Account', on_delete=models.PROTECT,
+                               null=True, blank=True, related_name='ap_settings'
+                           )
+    default_ar_account   = models.ForeignKey(
+                               'finance.Account', on_delete=models.PROTECT,
+                               null=True, blank=True, related_name='ar_settings'
+                           )
+    default_revenue_account = models.ForeignKey(
+                               'finance.Account', on_delete=models.PROTECT,
+                               null=True, blank=True, related_name='revenue_settings'
+                           )
+    default_expense_account = models.ForeignKey(
+                               'finance.Account', on_delete=models.PROTECT,
+                               null=True, blank=True, related_name='expense_settings'
+                           )
+    default_cash_account = models.ForeignKey(
+                               'finance.Account', on_delete=models.PROTECT,
+                               null=True, blank=True, related_name='cash_settings'
+                           )
+    default_ap_journal   = models.ForeignKey(
+                               'finance.Journal', on_delete=models.PROTECT,
+                               null=True, blank=True, related_name='ap_journal_settings'
+                           )
+    default_ar_journal   = models.ForeignKey(
+                               'finance.Journal', on_delete=models.PROTECT,
+                               null=True, blank=True, related_name='ar_journal_settings'
+                           )
+
+    class Meta:
+        verbose_name = 'Company Settings'
+
+    def __str__(self):
+        return f'Settings for {self.company.name}'

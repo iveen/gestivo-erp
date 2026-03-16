@@ -294,6 +294,58 @@
         </div>
       </div>
     </div>
+    <!-- GL Settings -->
+    <div v-if="activeTab === 'GL Settings'">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-6">
+        <div class="flex justify-between items-center">
+          <div>
+            <h3 class="text-sm font-semibold text-gray-700">GL Account Defaults</h3>
+            <p class="text-xs text-gray-400 mt-1">Used for auto-generating journal entries from bills and invoices.</p>
+          </div>
+          <button @click="saveGLSettings()" :disabled="glSaving"
+            class="bg-blue-800 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-900 disabled:opacity-50">
+            {{ glSaving ? 'Saving...' : 'Save Settings' }}
+          </button>
+        </div>
+        <div class="grid grid-cols-2 gap-6">
+          <div class="space-y-3">
+            <h4 class="text-xs font-semibold text-gray-500 uppercase">Control Accounts</h4>
+            <div v-for="field in accountFields" :key="field.key">
+              <label class="text-xs text-gray-500 mb-1 block">{{ field.label }}</label>
+              <select v-model="glForm[field.key]" style="color:#111827"
+                class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                <option :value="null">— None —</option>
+                <option v-for="a in glAccounts" :key="a.id" :value="a.id">{{ a.code }} - {{ a.name }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="space-y-3">
+            <h4 class="text-xs font-semibold text-gray-500 uppercase">Default Journals</h4>
+            <div>
+              <label class="text-xs text-gray-500 mb-1 block">AP Journal (Vendor Bills)</label>
+              <select v-model="glForm.default_ap_journal" style="color:#111827"
+                class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                <option :value="null">— None —</option>
+                <option v-for="j in glJournals" :key="j.id" :value="j.id">{{ j.code }} - {{ j.name }}</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs text-gray-500 mb-1 block">AR Journal (Customer Invoices)</label>
+              <select v-model="glForm.default_ar_journal" style="color:#111827"
+                class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                <option :value="null">— None —</option>
+                <option v-for="j in glJournals" :key="j.id" :value="j.id">{{ j.code }} - {{ j.name }}</option>
+              </select>
+            </div>
+            <p class="text-xs text-gray-400 pt-2">
+              These defaults are used when auto-generating GL entries from vendor bills and customer invoices.
+            </p>
+          </div>
+        </div>
+        <p v-if="glError" class="text-xs text-red-500">{{ glError }}</p>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -302,7 +354,7 @@ import { ref, onMounted } from 'vue'
 import client from '../api/client'
 
 const activeTab = ref('Tenants')
-const tabs      = ['Tenants', 'Companies', 'Users', 'Roles']
+const tabs      = ['Tenants', 'Companies', 'Users', 'Roles', 'GL Settings']
 
 const tenants   = ref([])
 const companies = ref([])
@@ -310,6 +362,14 @@ const users     = ref([])
 const roles     = ref([])
 
 const modal = ref({ open: false, type: '', editing: false, id: null, error: '' })
+
+// GL Settings
+const glSettings = ref(null)
+const glForm     = ref({})
+const glSaving   = ref(false)
+const glError    = ref('')
+const glAccounts = ref([])
+const glJournals = ref([])
 const form  = ref({})
 
 const endpointMap = {
@@ -388,10 +448,53 @@ async function deleteItem(endpoint, id, reload) {
   } catch {}
 }
 
-onMounted(() => {
+const accountFields = [
+  { key: 'default_ap_account',      label: 'Accounts Payable (AP)' },
+  { key: 'default_ar_account',      label: 'Accounts Receivable (AR)' },
+  { key: 'default_revenue_account', label: 'Default Revenue' },
+  { key: 'default_expense_account', label: 'Default Expense' },
+  { key: 'default_cash_account',    label: 'Default Cash' },
+]
+
+async function loadGLSettings() {
+  try {
+    const r = await client.get('/accounts/company-settings/')
+    const list = r.data.results || r.data
+    glSettings.value = list[0] || null
+    glForm.value = glSettings.value ? { ...glSettings.value } : {
+      company: '', default_ap_account: null, default_ar_account: null,
+      default_revenue_account: null, default_expense_account: null,
+      default_cash_account: null, default_ap_journal: null, default_ar_journal: null
+    }
+  } catch {}
+}
+
+async function saveGLSettings() {
+  glSaving.value = true
+  glError.value  = ''
+  try {
+    const companyId = localStorage.getItem('company_id')
+    const payload   = { ...glForm.value, company: companyId }
+    if (glSettings.value?.id) {
+      await client.patch(`/accounts/company-settings/${glSettings.value.id}/`, payload)
+    } else {
+      await client.post('/accounts/company-settings/', payload)
+    }
+    await loadGLSettings()
+  } catch (e) {
+    glError.value = JSON.stringify(e.response?.data || 'Error saving GL settings')
+  } finally {
+    glSaving.value = false
+  }
+}
+
+onMounted(async () => {
   loadTenants()
   loadCompanies()
   loadUsers()
   loadRoles()
+  await loadGLSettings()
+  try { const r = await client.get('/finance/accounts/'); glAccounts.value = r.data.results || r.data } catch {}
+  try { const r = await client.get('/finance/journals/'); glJournals.value = r.data.results || r.data } catch {}
 })
 </script>

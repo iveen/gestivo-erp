@@ -5,8 +5,9 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from apps.tenants.models import Tenant
-from apps.accounts.models import User, Company, Role, UserCompanyRole
+from apps.accounts.models import User, Company, Role, UserCompanyRole, CompanySettings
 from apps.accounts.serializers import (
+    CompanySettingsSerializer,
     TenantSerializer, CompanySerializer, RoleSerializer,
     UserSerializer, UserCompanyRoleSerializer
 )
@@ -82,3 +83,16 @@ class UserCompanyRoleViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(tenant=self.request.tenant)
+
+
+class CompanySettingsViewSet(viewsets.ModelViewSet):
+    serializer_class = CompanySettingsSerializer
+    http_method_names = ['get', 'post', 'patch', 'put']
+
+    def get_queryset(self):
+        return CompanySettings.objects.filter(
+            company__tenant=self.request.tenant
+        ).select_related('company')
+
+    def perform_create(self, serializer):
+        serializer.save()

@@ -98,6 +98,15 @@ class JournalEntry(BaseModel):
                       FiscalPeriod, on_delete=models.PROTECT,
                       null=True, blank=True
                   )
+    SOURCE_TYPES = [
+        ('manual',           'Manual'),
+        ('vendor_bill',      'Vendor Bill'),
+        ('customer_invoice', 'Customer Invoice'),
+        ('po_receipt',       'PO Receipt'),
+        ('payment',          'Payment'),
+    ]
+    source_type = models.CharField(max_length=30, choices=SOURCE_TYPES, default='manual')
+    source_id   = models.UUIDField(null=True, blank=True)
 
     @staticmethod
     def validate_balance(lines, raise_on_error=False):
@@ -174,6 +183,37 @@ class ExchangeRate(models.Model):
 
     def __str__(self):
         return f'{self.base_currency.code}/{self.target_currency.code} - {self.rate_date}'
+
+
+class JournalEntryAuditLog(BaseModel):
+    CHANGE_TYPES = [
+        ('line_added',      'Line Added'),
+        ('line_modified',   'Line Modified'),
+        ('line_deleted',    'Line Deleted'),
+        ('account_changed', 'Account Changed'),
+        ('amount_changed',  'Amount Changed'),
+        ('posted',          'Posted'),
+        ('unposted',        'Unposted'),
+    ]
+    entry       = models.ForeignKey(
+                      JournalEntry, on_delete=models.CASCADE,
+                      related_name='audit_logs'
+                  )
+    changed_by  = models.ForeignKey(
+                      'accounts.User', on_delete=models.PROTECT,
+                      null=True, blank=True
+                  )
+    change_type = models.CharField(max_length=30, choices=CHANGE_TYPES)
+    description = models.TextField(blank=True)
+    before_data = models.JSONField(null=True, blank=True)
+    after_data  = models.JSONField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.entry} - {self.change_type} - {self.created_at}'
+
 
 class VendorBill(BaseModel):
     class Meta:

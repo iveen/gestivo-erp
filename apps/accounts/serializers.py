@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
-from apps.accounts.models import User, Company, Role, UserCompanyRole
+from apps.accounts.models import User, Company, Role, UserCompanyRole, CompanySettings
 from apps.tenants.models import Tenant
 
 
@@ -25,7 +25,7 @@ class CompanySerializer(serializers.ModelSerializer):
 class RoleSerializer(serializers.ModelSerializer):
     class Meta:
         model  = Role
-        fields = ['id', 'company', 'name', 'description', 'tenant']
+        fields = ['id', 'company', 'name', 'description']
         read_only_fields = ['id']
 
 
@@ -75,3 +75,14 @@ class UserCompanyRoleSerializer(serializers.ModelSerializer):
             'company', 'company_name', 'role', 'role_name', 'tenant'
         ]
         read_only_fields = ['id']
+
+class CompanySettingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model  = CompanySettings
+        fields = [
+            'id', 'company',
+            'default_ap_account', 'default_ar_account',
+            'default_revenue_account', 'default_expense_account',
+            'default_cash_account',
+            'default_ap_journal', 'default_ar_journal',
+        ]
