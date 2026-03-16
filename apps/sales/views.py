@@ -22,6 +22,15 @@ class SalesQuotationViewSet(viewsets.ModelViewSet):
         )
 
     @action(detail=True, methods=['post'])
+    def send_quotation(self, request, pk=None):
+        quotation = self.get_object()
+        if quotation.status != 'draft':
+            return Response({'error': 'Only draft quotations can be sent.'}, status=status.HTTP_400_BAD_REQUEST)
+        quotation.status = 'sent'
+        quotation.save(update_fields=['status', 'updated_at'])
+        return Response({'status': 'sent'})
+
+    @action(detail=True, methods=['post'])
     def confirm(self, request, pk=None):
         quotation = self.get_object()
         try:
