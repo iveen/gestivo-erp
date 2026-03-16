@@ -504,6 +504,426 @@
         <p v-else class="text-xs text-gray-400">Select a date range and click Run Report.</p>
       </div>
     </div>
+
+    <!-- ── VENDOR BILLS ── -->
+    <div v-if="activeTab === 'Vendor Bills'">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-sm font-semibold text-gray-700">Vendor Bills</h3>
+        <button @click="openBillForm()"
+          class="bg-blue-800 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-900">
+          + New Bill
+        </button>
+      </div>
+
+      <!-- Bill Form -->
+      <div v-if="showBillForm" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 space-y-4">
+        <h4 class="text-sm font-semibold text-gray-700">New Vendor Bill</h4>
+        <div class="grid grid-cols-4 gap-4">
+          <div>
+            <label class="text-xs text-gray-500 mb-1 block">Vendor *</label>
+            <select v-model="billForm.vendor" style="color:#111827"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+              <option value="">Select Vendor</option>
+              <option v-for="v in vendors" :key="v.id" :value="v.id">{{ v.name }}</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-gray-500 mb-1 block">Bill Number *</label>
+            <input v-model="billForm.bill_number" placeholder="BILL-001" style="color:#111827"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
+          </div>
+          <div>
+            <label class="text-xs text-gray-500 mb-1 block">Bill Date *</label>
+            <input v-model="billForm.bill_date" type="date" style="color:#111827"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
+          </div>
+          <div>
+            <label class="text-xs text-gray-500 mb-1 block">Due Date *</label>
+            <input v-model="billForm.due_date" type="date" style="color:#111827"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
+          </div>
+        </div>
+        <!-- Lines -->
+        <div>
+          <div class="flex justify-between items-center mb-2">
+            <label class="text-xs text-gray-500">Bill Lines</label>
+            <button @click="addBillLine()" class="text-xs text-blue-600 hover:underline">+ Add Line</button>
+          </div>
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-gray-400 text-xs uppercase">
+              <tr>
+                <th class="text-left px-3 py-2">Account</th>
+                <th class="text-left px-3 py-2">Description</th>
+                <th class="text-right px-3 py-2">Qty</th>
+                <th class="text-right px-3 py-2">Unit Price</th>
+                <th class="text-right px-3 py-2">Subtotal</th>
+                <th class="px-3 py-2"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(line, i) in billForm.lines" :key="i" class="border-t border-gray-50">
+                <td class="px-2 py-1">
+                  <select v-model="line.account" style="color:#111827"
+                    class="w-full border border-gray-200 rounded px-2 py-1 text-sm">
+                    <option value="">Select Account</option>
+                    <option v-for="a in accounts" :key="a.id" :value="a.id">{{ a.code }} - {{ a.name }}</option>
+                  </select>
+                </td>
+                <td class="px-2 py-1">
+                  <input v-model="line.description" placeholder="Description" style="color:#111827"
+                    class="w-full border border-gray-200 rounded px-2 py-1 text-sm" />
+                </td>
+                <td class="px-2 py-1">
+                  <input v-model="line.quantity" type="number" step="0.01" style="color:#111827"
+                    class="w-20 border border-gray-200 rounded px-2 py-1 text-sm text-right" />
+                </td>
+                <td class="px-2 py-1">
+                  <input v-model="line.unit_price" type="number" step="0.01" style="color:#111827"
+                    class="w-28 border border-gray-200 rounded px-2 py-1 text-sm text-right" />
+                </td>
+                <td class="px-2 py-1 text-right text-gray-700 font-medium">
+                  {{ fmt((parseFloat(line.quantity)||0) * (parseFloat(line.unit_price)||0)) }}
+                </td>
+                <td class="px-2 py-1 text-center">
+                  <button @click="removeBillLine(i)" class="text-red-400 hover:text-red-600 text-xs">✕</button>
+                </td>
+              </tr>
+            </tbody>
+            <tfoot class="border-t border-gray-200">
+              <tr>
+                <td colspan="4" class="px-3 py-2 text-right text-xs text-gray-500 font-semibold">Total</td>
+                <td class="px-3 py-2 text-right text-sm font-bold text-gray-800">{{ fmt(billTotal) }}</td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <p v-if="billError" class="text-xs text-red-500">{{ billError }}</p>
+        <div class="flex justify-end gap-3">
+          <button @click="showBillForm = false" class="text-sm text-gray-500 px-4 py-2">Cancel</button>
+          <button @click="saveBill()"
+            class="bg-blue-800 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-900">Save Bill</button>
+        </div>
+      </div>
+
+      <!-- Bills List -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 text-gray-400 text-xs uppercase">
+            <tr>
+              <th class="text-left px-4 py-3">Vendor</th>
+              <th class="text-left px-4 py-3">Bill #</th>
+              <th class="text-left px-4 py-3">Bill Date</th>
+              <th class="text-left px-4 py-3">Due Date</th>
+              <th class="text-right px-4 py-3">Total</th>
+              <th class="text-right px-4 py-3">Amount Due</th>
+              <th class="text-left px-4 py-3">Status</th>
+              <th class="text-left px-4 py-3">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="bills.length === 0">
+              <td colspan="8" class="px-4 py-6 text-center text-gray-400">No vendor bills found</td>
+            </tr>
+            <tr v-for="b in bills" :key="b.id" class="border-t border-gray-50 hover:bg-gray-50"
+              :class="b.is_overdue ? 'bg-red-50' : ''">
+              <td class="px-4 py-3 font-medium text-gray-800">{{ b.vendor_name }}</td>
+              <td class="px-4 py-3 font-mono text-xs text-gray-600">{{ b.bill_number }}</td>
+              <td class="px-4 py-3 text-gray-500">{{ b.bill_date }}</td>
+              <td class="px-4 py-3" :class="b.is_overdue ? 'text-red-600 font-medium' : 'text-gray-500'">{{ b.due_date }}</td>
+              <td class="px-4 py-3 text-right text-gray-800">{{ fmt(b.total) }}</td>
+              <td class="px-4 py-3 text-right font-medium" :class="b.amount_due > 0 ? 'text-red-600' : 'text-green-600'">
+                {{ fmt(b.amount_due) }}
+              </td>
+              <td class="px-4 py-3">
+                <span :class="billStatusClass(b.status)" class="px-2 py-1 rounded-full text-xs font-medium capitalize">
+                  {{ b.status }}
+                </span>
+              </td>
+              <td class="px-4 py-3 space-x-2">
+                <button @click="viewBill(b)" class="text-xs text-blue-600 hover:underline">View</button>
+                <button v-if="b.status === 'draft'" @click="postBill(b.id)" class="text-xs text-yellow-600 hover:underline">Post</button>
+                <button v-if="b.status === 'posted'" @click="markBillPaid(b.id)" class="text-xs text-green-600 hover:underline">Mark Paid</button>
+                <button v-if="b.status === 'draft'" @click="deleteBill(b.id)" class="text-xs text-red-500 hover:underline">Delete</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── CUSTOMER INVOICES ── -->
+    <div v-if="activeTab === 'Customer Invoices'">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-sm font-semibold text-gray-700">Customer Invoices</h3>
+        <button @click="openInvoiceForm()"
+          class="bg-blue-800 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-900">
+          + New Invoice
+        </button>
+      </div>
+
+      <!-- Invoice Form -->
+      <div v-if="showInvoiceForm" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 space-y-4">
+        <h4 class="text-sm font-semibold text-gray-700">New Customer Invoice</h4>
+        <div class="grid grid-cols-4 gap-4">
+          <div>
+            <label class="text-xs text-gray-500 mb-1 block">Customer *</label>
+            <select v-model="invoiceForm.customer" style="color:#111827"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+              <option value="">Select Customer</option>
+              <option v-for="c in customers" :key="c.id" :value="c.id">{{ c.name }}</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-gray-500 mb-1 block">Invoice # *</label>
+            <input v-model="invoiceForm.invoice_number" placeholder="INV-001" style="color:#111827"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
+          </div>
+          <div>
+            <label class="text-xs text-gray-500 mb-1 block">Invoice Date *</label>
+            <input v-model="invoiceForm.invoice_date" type="date" style="color:#111827"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
+          </div>
+          <div>
+            <label class="text-xs text-gray-500 mb-1 block">Due Date *</label>
+            <input v-model="invoiceForm.due_date" type="date" style="color:#111827"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
+          </div>
+        </div>
+        <!-- Lines -->
+        <div>
+          <div class="flex justify-between items-center mb-2">
+            <label class="text-xs text-gray-500">Invoice Lines</label>
+            <button @click="addInvoiceLine()" class="text-xs text-blue-600 hover:underline">+ Add Line</button>
+          </div>
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-gray-400 text-xs uppercase">
+              <tr>
+                <th class="text-left px-3 py-2">Account</th>
+                <th class="text-left px-3 py-2">Description</th>
+                <th class="text-right px-3 py-2">Qty</th>
+                <th class="text-right px-3 py-2">Unit Price</th>
+                <th class="text-right px-3 py-2">Disc %</th>
+                <th class="text-right px-3 py-2">Subtotal</th>
+                <th class="px-3 py-2"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(line, i) in invoiceForm.lines" :key="i" class="border-t border-gray-50">
+                <td class="px-2 py-1">
+                  <select v-model="line.account" style="color:#111827"
+                    class="w-full border border-gray-200 rounded px-2 py-1 text-sm">
+                    <option value="">Select Account</option>
+                    <option v-for="a in accounts" :key="a.id" :value="a.id">{{ a.code }} - {{ a.name }}</option>
+                  </select>
+                </td>
+                <td class="px-2 py-1">
+                  <input v-model="line.description" placeholder="Description" style="color:#111827"
+                    class="w-full border border-gray-200 rounded px-2 py-1 text-sm" />
+                </td>
+                <td class="px-2 py-1">
+                  <input v-model="line.quantity" type="number" step="0.01" style="color:#111827"
+                    class="w-20 border border-gray-200 rounded px-2 py-1 text-sm text-right" />
+                </td>
+                <td class="px-2 py-1">
+                  <input v-model="line.unit_price" type="number" step="0.01" style="color:#111827"
+                    class="w-28 border border-gray-200 rounded px-2 py-1 text-sm text-right" />
+                </td>
+                <td class="px-2 py-1">
+                  <input v-model="line.discount" type="number" step="0.01" style="color:#111827"
+                    class="w-20 border border-gray-200 rounded px-2 py-1 text-sm text-right" />
+                </td>
+                <td class="px-2 py-1 text-right text-gray-700 font-medium">
+                  {{ fmt((parseFloat(line.quantity)||0) * (parseFloat(line.unit_price)||0) * (1 - (parseFloat(line.discount)||0)/100)) }}
+                </td>
+                <td class="px-2 py-1 text-center">
+                  <button @click="removeInvoiceLine(i)" class="text-red-400 hover:text-red-600 text-xs">✕</button>
+                </td>
+              </tr>
+            </tbody>
+            <tfoot class="border-t border-gray-200">
+              <tr>
+                <td colspan="5" class="px-3 py-2 text-right text-xs text-gray-500 font-semibold">Total</td>
+                <td class="px-3 py-2 text-right text-sm font-bold text-gray-800">{{ fmt(invoiceTotal) }}</td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <p v-if="invoiceError" class="text-xs text-red-500">{{ invoiceError }}</p>
+        <div class="flex justify-end gap-3">
+          <button @click="showInvoiceForm = false" class="text-sm text-gray-500 px-4 py-2">Cancel</button>
+          <button @click="saveInvoice()"
+            class="bg-blue-800 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-900">Save Invoice</button>
+        </div>
+      </div>
+
+      <!-- Invoices List -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 text-gray-400 text-xs uppercase">
+            <tr>
+              <th class="text-left px-4 py-3">Customer</th>
+              <th class="text-left px-4 py-3">Invoice #</th>
+              <th class="text-left px-4 py-3">Invoice Date</th>
+              <th class="text-left px-4 py-3">Due Date</th>
+              <th class="text-right px-4 py-3">Total</th>
+              <th class="text-right px-4 py-3">Amount Due</th>
+              <th class="text-left px-4 py-3">Status</th>
+              <th class="text-left px-4 py-3">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="invoices.length === 0">
+              <td colspan="8" class="px-4 py-6 text-center text-gray-400">No customer invoices found</td>
+            </tr>
+            <tr v-for="inv in invoices" :key="inv.id" class="border-t border-gray-50 hover:bg-gray-50"
+              :class="inv.is_overdue ? 'bg-red-50' : ''">
+              <td class="px-4 py-3 font-medium text-gray-800">{{ inv.customer_name }}</td>
+              <td class="px-4 py-3 font-mono text-xs text-gray-600">{{ inv.invoice_number }}</td>
+              <td class="px-4 py-3 text-gray-500">{{ inv.invoice_date }}</td>
+              <td class="px-4 py-3" :class="inv.is_overdue ? 'text-red-600 font-medium' : 'text-gray-500'">{{ inv.due_date }}</td>
+              <td class="px-4 py-3 text-right text-gray-800">{{ fmt(inv.total) }}</td>
+              <td class="px-4 py-3 text-right font-medium" :class="inv.amount_due > 0 ? 'text-red-600' : 'text-green-600'">
+                {{ fmt(inv.amount_due) }}
+              </td>
+              <td class="px-4 py-3">
+                <span :class="invoiceStatusClass(inv.status)" class="px-2 py-1 rounded-full text-xs font-medium capitalize">
+                  {{ inv.status }}
+                </span>
+              </td>
+              <td class="px-4 py-3 space-x-2">
+                <button @click="viewInvoice(inv)" class="text-xs text-blue-600 hover:underline">View</button>
+                <button v-if="inv.status === 'draft'" @click="sendInvoice(inv.id)" class="text-xs text-yellow-600 hover:underline">Send</button>
+                <button v-if="['sent','overdue'].includes(inv.status)" @click="markInvoicePaid(inv.id)" class="text-xs text-green-600 hover:underline">Mark Paid</button>
+                <button v-if="inv.status === 'draft'" @click="deleteInvoice(inv.id)" class="text-xs text-red-500 hover:underline">Delete</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── BILL DETAIL MODAL ── -->
+    <div v-if="selectedBill" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+      <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-6 space-y-4">
+        <div class="flex justify-between items-center">
+          <h3 class="text-base font-semibold text-gray-800">Vendor Bill</h3>
+          <button @click="selectedBill = null" class="text-gray-400 hover:text-gray-600">✕</button>
+        </div>
+        <div class="grid grid-cols-3 gap-4 text-sm">
+          <div><span class="text-gray-400 text-xs">Vendor</span><p class="font-medium text-gray-800">{{ selectedBill.vendor_name }}</p></div>
+          <div><span class="text-gray-400 text-xs">Bill #</span><p class="font-medium text-gray-800">{{ selectedBill.bill_number }}</p></div>
+          <div><span class="text-gray-400 text-xs">Status</span>
+            <span :class="billStatusClass(selectedBill.status)" class="px-2 py-1 rounded-full text-xs font-medium capitalize">
+              {{ selectedBill.status }}
+            </span>
+          </div>
+          <div><span class="text-gray-400 text-xs">Bill Date</span><p class="font-medium text-gray-800">{{ selectedBill.bill_date }}</p></div>
+          <div><span class="text-gray-400 text-xs">Due Date</span><p class="font-medium text-gray-800">{{ selectedBill.due_date }}</p></div>
+          <div><span class="text-gray-400 text-xs">Amount Due</span>
+            <p class="font-bold" :class="selectedBill.amount_due > 0 ? 'text-red-600' : 'text-green-600'">
+              {{ fmt(selectedBill.amount_due) }}
+            </p>
+          </div>
+        </div>
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 text-gray-400 text-xs uppercase">
+            <tr>
+              <th class="text-left px-3 py-2">Account</th>
+              <th class="text-left px-3 py-2">Description</th>
+              <th class="text-right px-3 py-2">Qty</th>
+              <th class="text-right px-3 py-2">Unit Price</th>
+              <th class="text-right px-3 py-2">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="line in selectedBill.lines" :key="line.id" class="border-t border-gray-50">
+              <td class="px-3 py-2 text-gray-500">{{ line.account_name }}</td>
+              <td class="px-3 py-2 text-gray-700">{{ line.description }}</td>
+              <td class="px-3 py-2 text-right text-gray-700">{{ fmt(line.quantity) }}</td>
+              <td class="px-3 py-2 text-right text-gray-700">{{ fmt(line.unit_price) }}</td>
+              <td class="px-3 py-2 text-right font-medium text-gray-800">{{ fmt(line.subtotal) }}</td>
+            </tr>
+          </tbody>
+          <tfoot class="border-t-2 border-gray-200">
+            <tr>
+              <td colspan="4" class="px-3 py-2 text-right font-semibold text-gray-700">Total</td>
+              <td class="px-3 py-2 text-right font-bold text-gray-800">{{ fmt(selectedBill.total) }}</td>
+            </tr>
+          </tfoot>
+        </table>
+        <div class="flex justify-end gap-3">
+          <button v-if="selectedBill.status === 'draft'" @click="postBill(selectedBill.id); selectedBill = null"
+            class="border border-yellow-500 text-yellow-600 text-sm px-4 py-2 rounded-lg hover:bg-yellow-50">Post</button>
+          <button v-if="selectedBill.status === 'posted'" @click="markBillPaid(selectedBill.id); selectedBill = null"
+            class="bg-green-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-green-700">Mark Paid</button>
+          <button @click="selectedBill = null" class="text-sm text-gray-500 px-4 py-2">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── INVOICE DETAIL MODAL ── -->
+    <div v-if="selectedInvoice" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+      <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-6 space-y-4">
+        <div class="flex justify-between items-center">
+          <h3 class="text-base font-semibold text-gray-800">Customer Invoice</h3>
+          <button @click="selectedInvoice = null" class="text-gray-400 hover:text-gray-600">✕</button>
+        </div>
+        <div class="grid grid-cols-3 gap-4 text-sm">
+          <div><span class="text-gray-400 text-xs">Customer</span><p class="font-medium text-gray-800">{{ selectedInvoice.customer_name }}</p></div>
+          <div><span class="text-gray-400 text-xs">Invoice #</span><p class="font-medium text-gray-800">{{ selectedInvoice.invoice_number }}</p></div>
+          <div><span class="text-gray-400 text-xs">Status</span>
+            <span :class="invoiceStatusClass(selectedInvoice.status)" class="px-2 py-1 rounded-full text-xs font-medium capitalize">
+              {{ selectedInvoice.status }}
+            </span>
+          </div>
+          <div><span class="text-gray-400 text-xs">Invoice Date</span><p class="font-medium text-gray-800">{{ selectedInvoice.invoice_date }}</p></div>
+          <div><span class="text-gray-400 text-xs">Due Date</span><p class="font-medium text-gray-800">{{ selectedInvoice.due_date }}</p></div>
+          <div><span class="text-gray-400 text-xs">Amount Due</span>
+            <p class="font-bold" :class="selectedInvoice.amount_due > 0 ? 'text-red-600' : 'text-green-600'">
+              {{ fmt(selectedInvoice.amount_due) }}
+            </p>
+          </div>
+        </div>
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 text-gray-400 text-xs uppercase">
+            <tr>
+              <th class="text-left px-3 py-2">Account</th>
+              <th class="text-left px-3 py-2">Description</th>
+              <th class="text-right px-3 py-2">Qty</th>
+              <th class="text-right px-3 py-2">Unit Price</th>
+              <th class="text-right px-3 py-2">Disc %</th>
+              <th class="text-right px-3 py-2">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="line in selectedInvoice.lines" :key="line.id" class="border-t border-gray-50">
+              <td class="px-3 py-2 text-gray-500">{{ line.account_name }}</td>
+              <td class="px-3 py-2 text-gray-700">{{ line.description }}</td>
+              <td class="px-3 py-2 text-right text-gray-700">{{ fmt(line.quantity) }}</td>
+              <td class="px-3 py-2 text-right text-gray-700">{{ fmt(line.unit_price) }}</td>
+              <td class="px-3 py-2 text-right text-gray-500">{{ line.discount }}%</td>
+              <td class="px-3 py-2 text-right font-medium text-gray-800">{{ fmt(line.subtotal) }}</td>
+            </tr>
+          </tbody>
+          <tfoot class="border-t-2 border-gray-200">
+            <tr>
+              <td colspan="5" class="px-3 py-2 text-right font-semibold text-gray-700">Total</td>
+              <td class="px-3 py-2 text-right font-bold text-gray-800">{{ fmt(selectedInvoice.total) }}</td>
+            </tr>
+          </tfoot>
+        </table>
+        <div class="flex justify-end gap-3">
+          <button v-if="selectedInvoice.status === 'draft'" @click="sendInvoice(selectedInvoice.id); selectedInvoice = null"
+            class="border border-yellow-500 text-yellow-600 text-sm px-4 py-2 rounded-lg hover:bg-yellow-50">Send</button>
+          <button v-if="['sent','overdue'].includes(selectedInvoice.status)" @click="markInvoicePaid(selectedInvoice.id); selectedInvoice = null"
+            class="bg-green-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-green-700">Mark Paid</button>
+          <button @click="selectedInvoice = null" class="text-sm text-gray-500 px-4 py-2">Close</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -512,10 +932,28 @@ import { ref, computed, onMounted } from 'vue'
 import client from '../api/client'
 
 const activeTab = ref('Chart of Accounts')
-const tabs      = ['Chart of Accounts', 'Journal Entries', 'Reports']
+const tabs      = ['Chart of Accounts', 'Journal Entries', 'Reports', 'Vendor Bills', 'Customer Invoices']
 const accounts  = ref([])
 const journals  = ref([])
 const entries   = ref([])
+
+// AP
+const bills        = ref([])
+const selectedBill = ref(null)
+const showBillForm = ref(false)
+const billError    = ref('')
+const billForm     = ref({})
+
+// AR
+const invoices        = ref([])
+const selectedInvoice = ref(null)
+const showInvoiceForm = ref(false)
+const invoiceError    = ref('')
+const invoiceForm     = ref({})
+
+// Shared
+const vendors   = ref([])
+const customers = ref([])
 
 // Entry form
 const showEntryForm = ref(false)
@@ -695,12 +1133,143 @@ async function loadEntries() {
   } catch {}
 }
 
+async function loadBills() {
+  try { const r = await client.get('/finance/vendor-bills/'); bills.value = r.data.results || r.data } catch {}
+}
+async function loadInvoices() {
+  try { const r = await client.get('/finance/customer-invoices/'); invoices.value = r.data.results || r.data } catch {}
+}
+
+function openBillForm() {
+  billError.value = ''
+  billForm.value = {
+    vendor: vendors.value[0]?.id || '',
+    bill_number: '', bill_date: new Date().toISOString().slice(0,10),
+    due_date: '', tax_amount: 0, notes: '',
+    lines: [{ account: '', description: '', quantity: 1, unit_price: '' }]
+  }
+  showBillForm.value = true
+}
+
+function addBillLine() { billForm.value.lines.push({ account: '', description: '', quantity: 1, unit_price: '' }) }
+function removeBillLine(i) { billForm.value.lines.splice(i, 1) }
+const billTotal = computed(() => billForm.value.lines?.reduce((s,l) => s + (parseFloat(l.quantity)||0)*(parseFloat(l.unit_price)||0), 0) || 0)
+
+async function saveBill() {
+  billError.value = ''
+  if (!billForm.value.vendor)      { billError.value = 'Select a vendor'; return }
+  if (!billForm.value.bill_number) { billError.value = 'Enter bill number'; return }
+  if (!billForm.value.bill_date)   { billError.value = 'Select bill date'; return }
+  if (!billForm.value.due_date)    { billError.value = 'Select due date'; return }
+  try {
+    await client.post('/finance/vendor-bills/', {
+      vendor:      billForm.value.vendor,
+      bill_number: billForm.value.bill_number,
+      bill_date:   billForm.value.bill_date,
+      due_date:    billForm.value.due_date,
+      tax_amount:  parseFloat(billForm.value.tax_amount) || 0,
+      notes:       billForm.value.notes,
+      lines: billForm.value.lines.map(l => ({
+        account:     l.account,
+        description: l.description,
+        quantity:    parseFloat(l.quantity)    || 1,
+        unit_price:  parseFloat(l.unit_price)  || 0,
+      }))
+    })
+    showBillForm.value = false
+    loadBills()
+  } catch(e) { billError.value = JSON.stringify(e.response?.data || 'Error') }
+}
+
+async function postBill(id) {
+  try { await client.post(`/finance/vendor-bills/${id}/post_bill/`); loadBills() } catch {}
+}
+async function markBillPaid(id) {
+  try { await client.post(`/finance/vendor-bills/${id}/mark_paid/`); loadBills() } catch {}
+}
+async function deleteBill(id) {
+  if (!confirm('Delete this draft bill?')) return
+  try { await client.delete(`/finance/vendor-bills/${id}/`); loadBills() } catch {}
+}
+async function viewBill(b) {
+  try { const r = await client.get(`/finance/vendor-bills/${b.id}/`); selectedBill.value = r.data } catch { selectedBill.value = b }
+}
+
+function openInvoiceForm() {
+  invoiceError.value = ''
+  invoiceForm.value = {
+    customer: customers.value[0]?.id || '',
+    invoice_number: '', invoice_date: new Date().toISOString().slice(0,10),
+    due_date: '', tax_amount: 0, notes: '',
+    lines: [{ account: '', description: '', quantity: 1, unit_price: '', discount: 0 }]
+  }
+  showInvoiceForm.value = true
+}
+
+function addInvoiceLine() { invoiceForm.value.lines.push({ account: '', description: '', quantity: 1, unit_price: '', discount: 0 }) }
+function removeInvoiceLine(i) { invoiceForm.value.lines.splice(i, 1) }
+const invoiceTotal = computed(() => invoiceForm.value.lines?.reduce((s,l) => {
+  const qty = parseFloat(l.quantity)||0, price = parseFloat(l.unit_price)||0, disc = parseFloat(l.discount)||0
+  return s + qty * price * (1 - disc/100)
+}, 0) || 0)
+
+async function saveInvoice() {
+  invoiceError.value = ''
+  if (!invoiceForm.value.customer)       { invoiceError.value = 'Select a customer'; return }
+  if (!invoiceForm.value.invoice_number) { invoiceError.value = 'Enter invoice number'; return }
+  if (!invoiceForm.value.invoice_date)   { invoiceError.value = 'Select invoice date'; return }
+  if (!invoiceForm.value.due_date)       { invoiceError.value = 'Select due date'; return }
+  try {
+    await client.post('/finance/customer-invoices/', {
+      customer:       invoiceForm.value.customer,
+      invoice_number: invoiceForm.value.invoice_number,
+      invoice_date:   invoiceForm.value.invoice_date,
+      due_date:       invoiceForm.value.due_date,
+      tax_amount:     parseFloat(invoiceForm.value.tax_amount) || 0,
+      notes:          invoiceForm.value.notes,
+      lines: invoiceForm.value.lines.map(l => ({
+        account:     l.account,
+        description: l.description,
+        quantity:    parseFloat(l.quantity)   || 1,
+        unit_price:  parseFloat(l.unit_price) || 0,
+        discount:    parseFloat(l.discount)   || 0,
+      }))
+    })
+    showInvoiceForm.value = false
+    loadInvoices()
+  } catch(e) { invoiceError.value = JSON.stringify(e.response?.data || 'Error') }
+}
+
+async function sendInvoice(id) {
+  try { await client.post(`/finance/customer-invoices/${id}/send_invoice/`); loadInvoices() } catch {}
+}
+async function markInvoicePaid(id) {
+  try { await client.post(`/finance/customer-invoices/${id}/mark_paid/`); loadInvoices() } catch {}
+}
+async function deleteInvoice(id) {
+  if (!confirm('Delete this draft invoice?')) return
+  try { await client.delete(`/finance/customer-invoices/${id}/`); loadInvoices() } catch {}
+}
+async function viewInvoice(inv) {
+  try { const r = await client.get(`/finance/customer-invoices/${inv.id}/`); selectedInvoice.value = r.data } catch { selectedInvoice.value = inv }
+}
+
+function billStatusClass(s) {
+  const map = { draft:'bg-gray-100 text-gray-600', posted:'bg-blue-100 text-blue-700', paid:'bg-green-100 text-green-700', cancelled:'bg-red-100 text-red-600' }
+  return map[s] || 'bg-gray-100 text-gray-600'
+}
+function invoiceStatusClass(s) {
+  const map = { draft:'bg-gray-100 text-gray-600', sent:'bg-blue-100 text-blue-700', paid:'bg-green-100 text-green-700', overdue:'bg-red-100 text-red-600', cancelled:'bg-red-100 text-red-600' }
+  return map[s] || 'bg-gray-100 text-gray-600'
+}
+
 onMounted(async () => {
   loadAccounts()
   loadEntries()
-  try {
-    const res = await client.get('/finance/journals/')
-    journals.value = res.data.results || res.data
-  } catch {}
+  loadBills()
+  loadInvoices()
+  try { const r = await client.get('/finance/journals/'); journals.value = r.data.results || r.data } catch {}
+  try { const r = await client.get('/contacts/?is_vendor=true'); vendors.value = r.data.results || r.data } catch {}
+  try { const r = await client.get('/contacts/?is_customer=true'); customers.value = r.data.results || r.data } catch {}
 })
 </script>

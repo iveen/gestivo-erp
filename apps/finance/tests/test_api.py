@@ -357,14 +357,26 @@ def test_customer_invoice_create(user, tenant, company, with_tenant_company):
     )
     client = APIClient()
     client.force_authenticate(user=user)
+    from apps.finance.models import Account, AccountType
+    account = Account.objects.create(
+        company=company, tenant=tenant,
+        code='4099', name='Test Revenue',
+        account_type=AccountType.REVENUE, currency='USD'
+    )
     response = client.post('/api/finance/customer-invoices/', {
         'customer': str(customer.id),
         'invoice_number': 'INV-API-001',
         'invoice_date': '2026-03-01',
         'due_date': '2026-03-31',
-        'subtotal': '1000.00',
-        'total': '1000.00',
-        'status': 'draft',
+        'lines': [
+            {
+                'account': str(account.id),
+                'description': 'Service',
+                'quantity': '1.00',
+                'unit_price': '1000.00',
+                'discount': '0',
+            }
+        ],
     }, format='json')
     assert response.status_code == 201
 

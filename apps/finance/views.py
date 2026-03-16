@@ -118,6 +118,31 @@ class VendorBillViewSet(viewsets.ModelViewSet):
             company=self.request.company
         ).select_related('vendor').prefetch_related('lines')
 
+    def perform_create(self, serializer):
+        serializer.save(
+            tenant=self.request.tenant,
+            company=self.request.company,
+        )
+
+    @action(detail=True, methods=['post'])
+    def post_bill(self, request, pk=None):
+        bill = self.get_object()
+        if bill.status != 'draft':
+            return Response({'error': 'Only draft bills can be posted.'}, status=status.HTTP_400_BAD_REQUEST)
+        bill.status = 'posted'
+        bill.save(update_fields=['status', 'updated_at'])
+        return Response({'status': 'posted'})
+
+    @action(detail=True, methods=['post'])
+    def mark_paid(self, request, pk=None):
+        bill = self.get_object()
+        if bill.status not in ['posted']:
+            return Response({'error': 'Only posted bills can be marked as paid.'}, status=status.HTTP_400_BAD_REQUEST)
+        bill.amount_paid = bill.total
+        bill.status      = 'paid'
+        bill.save(update_fields=['amount_paid', 'status', 'updated_at'])
+        return Response({'status': 'paid'})
+
 
 @extend_schema(tags=['AP - Reports'])
 class APAgingView(APIView):
@@ -142,8 +167,27 @@ class CustomerInvoiceViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(
             tenant=self.request.tenant,
-            company=self.request.company
+            company=self.request.company,
         )
+
+    @action(detail=True, methods=['post'])
+    def send_invoice(self, request, pk=None):
+        invoice = self.get_object()
+        if invoice.status != 'draft':
+            return Response({'error': 'Only draft invoices can be sent.'}, status=status.HTTP_400_BAD_REQUEST)
+        invoice.status = 'sent'
+        invoice.save(update_fields=['status', 'updated_at'])
+        return Response({'status': 'sent'})
+
+    @action(detail=True, methods=['post'])
+    def mark_paid(self, request, pk=None):
+        invoice = self.get_object()
+        if invoice.status not in ['sent', 'overdue']:
+            return Response({'error': 'Only sent or overdue invoices can be marked as paid.'}, status=status.HTTP_400_BAD_REQUEST)
+        invoice.amount_paid = invoice.total
+        invoice.status      = 'paid'
+        invoice.save(update_fields=['amount_paid', 'status', 'updated_at'])
+        return Response({'status': 'paid'})
 
 
 @extend_schema(tags=['AR - Reports'])
